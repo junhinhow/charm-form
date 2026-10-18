@@ -3,9 +3,14 @@ package charmform
 import (
 	"encoding/json"
 	"fmt"
+	"io"
+	"os"
 )
 
-// ToJSON serializa a especificacao do formulario para JSON.
+// ToJSON serializa a especificação do formulário para JSON.
+//
+// O erro é mantido por compatibilidade com a API pública: a especificação só
+// contém tipos primitivos, então a serialização na prática não falha.
 func ToJSON(spec FormSpec) ([]byte, error) {
 	data, err := json.MarshalIndent(spec, "", "  ")
 	if err != nil {
@@ -14,13 +19,26 @@ func ToJSON(spec FormSpec) ([]byte, error) {
 	return data, nil
 }
 
-// Run imprime a especificacao do formulario como JSON no stdout.
-// Placeholder para futura integracao com charmbracelet/huh.
-func Run(spec FormSpec) error {
+// WriteJSON escreve a especificação do formulário em JSON no writer
+// informado, terminada por uma quebra de linha.
+func WriteJSON(w io.Writer, spec FormSpec) error {
 	data, err := ToJSON(spec)
 	if err != nil {
 		return err
 	}
-	fmt.Println(string(data))
+	if _, err := w.Write(data); err != nil {
+		return fmt.Errorf("erro ao escrever JSON: %w", err)
+	}
+	if _, err := io.WriteString(w, "\n"); err != nil {
+		return fmt.Errorf("erro ao escrever JSON: %w", err)
+	}
 	return nil
+}
+
+// Run imprime a especificação do formulário como JSON no stdout.
+//
+// Para emitir as respostas coletadas por um formulário use o subpacote
+// renderer, ou WriteJSON com um io.Writer próprio.
+func Run(spec FormSpec) error {
+	return WriteJSON(os.Stdout, spec)
 }
