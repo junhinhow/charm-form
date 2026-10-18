@@ -277,6 +277,20 @@ func TestViewMostraErroDeValidacao(t *testing.T) {
 	}
 }
 
+func TestNewNormalizaTipos(t *testing.T) {
+	m := New(charmform.FormSpec{
+		Title:  "T",
+		Fields: []charmform.FieldSpec{{Name: "a", Type: "Input"}},
+	})
+
+	digitar(m, "x")
+	m.Update(teclaEspecial(tea.KeyEnter))
+
+	if v, _ := m.Answers()["a"].(string); v != "x" {
+		t.Errorf("valor esperado %q, obtido %q", "x", v)
+	}
+}
+
 func TestTextBuffer(t *testing.T) {
 	var b textBuffer
 	b.SetValue("abc")

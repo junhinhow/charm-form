@@ -37,8 +37,10 @@ type campo struct {
 	err     string
 }
 
-// New cria um modelo para a especificação informada.
+// New cria um modelo para a especificação informada. Os tipos de campo são
+// normalizados, de modo que "Input" e "input" se comportam igual.
 func New(spec charmform.FormSpec) *Model {
+	spec = spec.Normalize()
 	m := &Model{
 		spec:    spec,
 		answers: charmform.Answers{},
@@ -116,17 +118,21 @@ func (m *Model) trataTecla(key tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 		return m.trataTeclaConfirm(c, key)
 	case charmform.TypeMultiSelect:
 		return m.trataTeclaMulti(c, key)
+	default:
+		// Tipos desconhecidos são tratados como entrada de texto.
+		return m.trataTeclaTexto(c, key)
 	}
-	return m, nil
 }
 
 // trataTeclaTexto trata as teclas dos campos "input" e "text".
 func (m *Model) trataTeclaTexto(c *campo, key tea.KeyPressMsg) (tea.Model, tea.Cmd) {
+	multilinha := c.spec.Type == charmform.TypeText
+
 	switch key.String() {
 	case "enter":
 		// Em campos de múltiplas linhas, "enter" insere uma quebra de linha
 		// e "ctrl+s" confirma o valor.
-		if c.spec.Type == charmform.TypeText {
+		if multilinha {
 			c.texto.Newline()
 			c.err = ""
 			return m, nil
@@ -152,10 +158,10 @@ func (m *Model) trataTeclaTexto(c *campo, key tea.KeyPressMsg) (tea.Model, tea.C
 		c.texto.End()
 	default:
 		if key.Text != "" && !key.Mod.Contains(tea.ModCtrl) && !key.Mod.Contains(tea.ModAlt) {
-			if c.spec.Type == charmform.TypeInput {
-				c.texto.InsertSemQuebra(key.Text)
-			} else {
+			if multilinha {
 				c.texto.Insert(key.Text)
+			} else {
+				c.texto.InsertSemQuebra(key.Text)
 			}
 		}
 	}
