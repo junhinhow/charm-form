@@ -1,6 +1,7 @@
 package charmform
 
 import (
+	"path/filepath"
 	"strings"
 	"testing"
 )
@@ -227,5 +228,20 @@ func TestFieldSpecLabelText(t *testing.T) {
 	f.Label = " Rótulo "
 	if f.LabelText() != "Rótulo" {
 		t.Errorf("LabelText esperado %q, obtido %q", "Rótulo", f.LabelText())
+	}
+}
+
+// TestExemploValido garante que o formulário de exemplo do repositório
+// continua carregando sem erros.
+func TestExemploValido(t *testing.T) {
+	spec, err := LoadFromFile(filepath.Join("examples", "deploy.yaml"))
+	if err != nil {
+		t.Fatalf("o exemplo do repositório deveria carregar sem erros: %v", err)
+	}
+	if len(spec.Fields) == 0 {
+		t.Fatal("o exemplo deveria ter campos")
+	}
+	if spec.Description == "" {
+		t.Error("o exemplo deveria ter uma descrição")
 	}
 }
